@@ -7,7 +7,9 @@ is larger than gate error.
 
 ## Motivation
 
-> **TODO:** to be written.
+Quantum error correction caught my attention because of one question: if quantum information is so fragile, how can it be protected and recovered without directly observing the errors?
+
+The decoder is where that question gets answered. It has to work out what most likely went wrong using only syndrome measurements, even though those measurements can themselves be unreliable. I wanted to understand how decoders make that call, how their performance changes as noise increases and what limits them. This repo is the first stage. It covers the repetition code and surface code thresholds, with a decoder of my own coming next.
 
 ## What's here
 
@@ -99,8 +101,7 @@ round. Measurement adds one flip per check qubit per round, so increasing it
 fivefold raises the total noise per round by much less than a fivefold
 increase in gate error would.
 
-The 0.5 and 1 results are within noise of each other: their difference is
-0.017 ± 0.014 percentage points.
+The 0.5 and 1 results differ by less than 0.02 percentage points, which is about 1σ of shot noise, so they are within noise of each other.
 
 ## Running it
 
