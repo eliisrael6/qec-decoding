@@ -59,6 +59,8 @@ ax_th.minorticks_off()
 ax_th.set_xticks(ratios, [str(r) for r in ratios])
 ax_th.set_xlabel("Measurement error / gate error (meas_ratio)")
 ax_th.set_ylabel("Threshold p (d = 5 / d = 7 crossing)")
+# start at zero so the size of the drop isn't exaggerated
+ax_th.set_ylim(bottom=0)
 ax_th.set_title("Threshold vs readout noise")
 ax_th.grid(True, which="both", alpha=0.3)
 
