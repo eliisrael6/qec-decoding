@@ -1,4 +1,18 @@
-from surface import logical_error_rate, make_circuit
+import numpy as np
+
+from surface import crossing, logical_error_rate, make_circuit
+
+
+def test_meas_ratio_one_is_default():
+    assert make_circuit(5, 0.004, meas_ratio=1.0) == make_circuit(5, 0.004)
+
+
+def test_crossing_of_straight_lines():
+    # on log-log axes these are lines of slope 2 and 3 meeting at p = 0.01
+    p = np.array([0.004, 0.008, 0.016, 0.032])
+    small = (p / 0.01) ** 2
+    large = (p / 0.01) ** 3
+    assert np.isclose(crossing(p, small, large), 0.01)
 
 
 def test_no_noise_no_errors():

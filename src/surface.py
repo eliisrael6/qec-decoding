@@ -12,15 +12,16 @@ import pymatching
 import stim
 
 
-def make_circuit(d, p):
-    # the same p for every noise channel stim offers on this circuit
+def make_circuit(d, p, meas_ratio=1.0):
+    # p for every noise channel stim offers, except readout which is scaled
+    # by meas_ratio to model measurement being worse (or better) than gates
     return stim.Circuit.generated(
         "surface_code:rotated_memory_z",
         distance=d,
         rounds=d,
         after_clifford_depolarization=p,
         after_reset_flip_probability=p,
-        before_measure_flip_probability=p,
+        before_measure_flip_probability=meas_ratio * p,
         before_round_data_depolarization=p,
     )
 
@@ -37,3 +38,24 @@ def logical_error_rate(circuit, shots, seed=None):
     # a shot fails when the decoder's guess for the logical flip is wrong
     wrong = np.any(predictions != observables, axis=1)
     return wrong.mean()
+
+
+def crossing(p_values, rates_small, rates_large):
+    """
+    Estimate the threshold as the p where two distances' curves cross.
+
+    Below threshold the larger code has the lower rate, above it the
+    higher rate. Find the first pair of neighbouring p values where that
+    flips and interpolate log(rate) against log(p) linearly between them.
+    Returns nan if the curves don't cross inside the sweep.
+    """
+    log_p = np.log(p_values)
+    # log of the ratio is negative below threshold and positive above
+    gap = np.log(rates_large) - np.log(rates_small)
+
+    for i in range(len(gap) - 1):
+        if gap[i] < 0 <= gap[i + 1]:
+            # where the straight line between the two points hits zero
+            frac = -gap[i] / (gap[i + 1] - gap[i])
+            return np.exp(log_p[i] + frac * (log_p[i + 1] - log_p[i]))
+    return np.nan
