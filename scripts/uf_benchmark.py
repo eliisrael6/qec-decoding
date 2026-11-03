@@ -61,10 +61,17 @@ for d in acc_distances:
               f"mismatches = {mismatches}  ({time.time() - start:.0f}s)")
 
 
+TIMING_REPEATS = 5
+
+
 def per_shot_us(fn, synd):
-    t = time.perf_counter()
-    fn(synd)
-    return (time.perf_counter() - t) / len(synd) * 1e6
+    # median over several runs, since a single timing is noisy
+    times = []
+    for _ in range(TIMING_REPEATS):
+        t = time.perf_counter()
+        fn(synd)
+        times.append((time.perf_counter() - t) / len(synd) * 1e6)
+    return np.median(times)
 
 
 # speed: per shot time at fixed p

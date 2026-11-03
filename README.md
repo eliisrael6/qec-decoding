@@ -1,9 +1,6 @@
 # qec-decoding
 
-Simulations of the repetition code and the rotated surface code, with threshold
-estimates from Monte Carlo sampling. The surface code study uses Stim and
-PyMatching, and also measures how the threshold changes when measurement error
-is larger than gate error.
+Simulations of the repetition code and the rotated surface codem and a union find decoder written for this project. The surface code study uses Stim and PyMatching to estimate thresholds, including how the threshold changes when measurement error is larger than gate error. The union find decoder is benchmarked against PyMatching on the repetition code.
 
 ## Motivation
 
@@ -103,6 +100,24 @@ increase in gate error would.
 
 The 0.5 and 1 results differ by less than 0.02 percentage points, which is about 1σ of shot noise, so they are within noise of each other.
 
+### (d) Union find decoder
+
+A union find decoder for nthe repetion code, in src/union_find.py, src/uf_decoder.py and src/peeling.py. Clusters grow around each defect and merge until each one holds an even number of defects or reaches the boundary, then peeling picks the correction inside each cluster.
+
+**Accuracy.** It chose the same correction as PyMatching on all 6.4 million sampled shots (d = 3 to 9, p = 0.02 to 0.4) and on every possible syndrome for d = 3 to 11, and both match the exact formula from (a). This is the easy case, since minimum weight decoding is optimal for this code. On the surface code, union find is expected to lose a little accuracy to matching.
+
+**Speed.** Median time per shot over 5 runs, at p = 0.1:
+
+| d | Union find | PyMatching, single call | PyMatching, batch |
+|---|---|---|---|
+| 5 | 6.2 µs | 2.5 µs | 0.08 µs |
+| 21 | 16.0 µs | 3.0 µs | 0.38 µs |
+| 101 | 68.2 µs | 5.1 µs | 2.15 µs |
+
+Union find time grows roughly linearly with d. PyMatching is about 2 to 13 times faster per call and 30 to 80 times faster in batch, mostly because it is optimised C++, while this decoder is pure Python and rebuilds its graph on every call.
+
+![Union find against PyMatching: accuracy and time per shot](figures/uf_benchmark.png)
+
 ## Running it
 
 Tested with Python 3.11.
@@ -117,6 +132,7 @@ pytest
 python scripts/plot_repetition.py     # figures/repetition_threshold.png
 python scripts/surface_threshold.py   # results/surface_threshold.csv, figures/surface_threshold.png
 python scripts/measurement_study.py   # results/measurement_study.csv, figures/measurement_study.png
+python scripts/uf_benchmark.py        # results/uf_benchmark.csv, figures/uf_benchmark.png
 python scripts/readme_numbers.py      # numbers quoted above, read from results/
 ```
 
@@ -137,12 +153,11 @@ Elsewhere, results should agree within shot noise.
 
 - Simulation only. Nothing here has been run on hardware.
 - The noise model is uniform: a single p for all gates, resets and idling. The only variation is the readout ratio in (c).
-- The surface code decoder is PyMatching, a library decoder, not one written for this project.
+- The surface code results use PyMatching. The union find decoder written for this porject so far handles only rhe repetition code with perfect measurements.
+- Union fidn timings are pure Python and inckude rebuilding the graph on every call.
 - The distances are small (d ≤ 7), and crossings between small codes move with distance, so the thresholds are finite size estimates.
 - Logical error rates are per d rounds, not per round, so they are not directly comparable with per round figures.
 
 ## Next steps
 
-Planned: a union find decoder written for this project, benchmarked against
-PyMatching on the same circuits for accuracy (logical error rates and
-threshold) and speed (decoding time per shot).
+Extend the union find decoder to measurement errors, using the detector error model Stim generates for a repetition code memory experiment, them to the rotated surface code, and compare its threshold and speed with PyMatching on the same circuits.
